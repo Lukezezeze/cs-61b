@@ -100,7 +100,7 @@ public class Model extends Observable {
      从 startRow 向上开始检查列中的每一行。
      找到第一个空位置，或者找到可以合并的方块。
      如果找到可合并的方块（相同数值），则返回该行。
-     如果找到空位置且没有其他可合并的方块，则返回最近的空位置
+     如果找到空位置且没有其他可合并的方块，则返回最近的空位置//这个函数没用了，思想可以学习
 
      */
     public int findNextAvailableRow(int col, int startRow) {
@@ -123,6 +123,38 @@ public class Model extends Observable {
     }
 
     /**
+     * findTargetRow 方法的逻辑
+     * 初始化目标行: 从当前方块所在的行开始向上搜索，targetRow 初始化为 row + 1，表示开始检查上方的第一行。
+     *
+     * 查找第一个空位: 使用 while 循环从 targetRow 开始，一直向上查找直到找到一个非空的方块或者到达边界:
+     *
+     * 如果当前行 targetRow 是空的（board.tile(col, targetRow) == null），继续向上移动，直到找到一个非空的方块或达到边界。
+     * 检查合并: 一旦找到一个非空的方块，检查它是否与当前方块的值相同且没有合并过:
+     *
+     * 如果可以合并（board.tile(col, targetRow).value() == board.tile(col, row).value()）并且这一行没有被合并过（!merged[targetRow]），
+     * 返回这个 targetRow 作为可以合并的目标行。
+     * 如果不能合并，返回 targetRow - 1 作为最后一个可放置的位置（空位）。
+     * 返回目标行:
+     *
+     * 返回的行要么是一个可以合并的行，要么是最后一个空位所在的行。
+     * @param col
+     * @param row
+     * @param merged
+     * @return
+     */
+    private int findTargetRow(int col, int row, boolean[] merged) {
+        int targetRow = row + 1;
+        while (targetRow < board.size() && board.tile(col, targetRow) == null) {
+            targetRow++;
+        }
+        // 检查能否合并
+        if (targetRow < board.size() && board.tile(col, targetRow).value() == board.tile(col, row).value() && !merged[targetRow]) {
+            return targetRow; // 可以合并
+        }
+        return targetRow - 1; // 不能合并，返回最后一个空位
+    }
+
+    /**
      * processColumn(int col)
      * 作用：处理一列中的所有方块，将它们移动到正确的位置或进行合并。
      * 逻辑：
@@ -139,27 +171,16 @@ public class Model extends Observable {
         for (int row = board.size() - 2; row >= 0; row--) {
             Tile currentTile = board.tile(col, row);
             if (currentTile != null) {
-                int targetRow = row + 1;
+                int targetRow = findTargetRow(col, row, merged);
 
-                // 找到目标行的位置
-                while (targetRow < board.size() && board.tile(col, targetRow) == null) {
-                    targetRow++;
-                }
-
-                // 合并逻辑
-                if (targetRow < board.size() && board.tile(col, targetRow).value() == currentTile.value() && !merged[targetRow]) {
-                    // 合并操作
-                    board.move(col, targetRow, currentTile);
-                    score += board.tile(col, targetRow).value();
-                    merged[targetRow] = true; // 标记合并
-                    changed = true;
-                } else {
-                    // 如果不能合并，就移动到空位
-                    targetRow--;
-                    if (targetRow != row) {
-                        board.move(col, targetRow, currentTile);
-                        changed = true;
+                // 进行移动或合并
+                if (targetRow != row) {
+                    boolean mergedTile = board.move(col, targetRow, currentTile);
+                    if (mergedTile) {
+                        score += board.tile(col, targetRow).value();
+                        merged[targetRow] = true; // 标记合并
                     }
+                    changed = true;
                 }
             }
         }
