@@ -10,7 +10,9 @@ public class IntListExercises {
      */
     public static void addConstant(IntList lst, int c) {
         IntList head = lst;
-        while (head.rest != null) {
+        //没有检查到head，如果head是null那咋办
+        //while (head.rest != null) {
+        while (head != null) {
             head.first += c;
             head = head.rest;
         }
@@ -35,6 +37,10 @@ public class IntListExercises {
 
     /** Returns the max value in the IntList starting at L. */
     public static int max(IntList L) {
+       // int max = L.first; 如果L为null怎么办
+        if (L == null) {
+            throw new IllegalArgumentException("List cannot be null");
+        }
         int max = L.first;
         IntList p = L.rest;
         while (p != null) {
@@ -54,7 +60,7 @@ public class IntListExercises {
         while (x > 10) {
             x = x / 10;
         }
-        int firstDigit = x % 10;
+        int firstDigit = x;//修改之处
         return firstDigit == lastDigit;
     }
 
