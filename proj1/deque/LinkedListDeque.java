@@ -51,20 +51,18 @@ public class LinkedListDeque<T> {
             newnode.prev = sentinal;
             newnode.next = sentinal;
         }else{
-            Node current = sentinal.next;
-            while(current.next != sentinal){
-                current = current.next;
-            }
-            current.next = newnode;
-            newnode.prev = current;
-            newnode.next = sentinal;
-            sentinal.prev = newnode;
+
+            Node newNode = new Node(item);
+            newNode.prev = sentinal.prev;
+            newNode.next = sentinal;
+            sentinal.prev.next = newNode;
+            sentinal.prev = newNode;
         }
         size += 1;
     }
 
     public boolean isEmpty(){
-        return sentinal.next == null;
+        return sentinal.next == sentinal;
     }
 
     public int size(){
@@ -106,21 +104,15 @@ public class LinkedListDeque<T> {
         }
     }
 
-    public T removeLast(){
-        if(sentinal.next != sentinal){
+    public T removeLast() {
+        if (isEmpty()) {
             return null;
-        }else {
-            Node current = sentinal.next;
-            while (current.next == sentinal){
-                current = current.next;
-            }
-
-            Node newlastnode = current.prev;
-            newlastnode.next = sentinal;
-            sentinal.prev = newlastnode;
-            size -= 1;
-            return current.value;
         }
+        Node last = sentinal.prev;
+        sentinal.prev = last.prev;
+        last.prev.next = sentinal;
+        size--;
+        return last.value;
     }
 
     public T get(int index) {
