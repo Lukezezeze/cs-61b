@@ -17,21 +17,15 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
     }
 
     public void addFirst(T item){
-        if(items[nextfirst] == null){
-            items[nextfirst] = item;
-        }
-
-        nextfirst = (nextfirst - 1 + items.length) % items.length;
-        size += 1;
+        items[nextfirst] = item;  // 插入元素到 nextFirst 的位置
+        nextfirst = (nextfirst - 1 + items.length) % items.length;  // 更新 nextFirst
+        size++;
     }
 
-    public void addLast(T item){
-        if(items[nextlast] == null){
-            items[nextlast] = item;
-        }
-
-        nextfirst = (nextfirst + 1) % items.length;
-        size += 1;
+    public void addLast(T item) {
+        items[nextlast] = item;  // 插入元素到 nextLast 的位置
+        nextlast = (nextlast + 1) % items.length;  // 更新 nextLast
+        size++;
     }
 
 
