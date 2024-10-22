@@ -3,11 +3,11 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
-    public class Node{
-        T value;
-        Node next;
-        Node prev;
+public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
+    public class Node {
+        private T value;
+        private Node next;
+        private Node prev;
 
         public Node(T value){
             this.value = value;
@@ -24,15 +24,15 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
         size = 0;                   // 初始化大小为 0
     }
 
-    public void addFirst(T item){
+    public void addFirst(T item) {
         Node newnode = new Node(item);
 
-        if(sentinal.next == sentinal){
+        if (sentinal.next == sentinal) {
             sentinal.next = newnode;
             sentinal.prev = newnode;
             newnode.next = sentinal;
             newnode.prev = sentinal;
-        }else{
+        } else {
             Node ccurrent = sentinal.next;
             sentinal.next = newnode;
             newnode.next = ccurrent;
@@ -45,7 +45,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
 
     }
 
-    public void addLast(T item){
+    public void addLast(T item) {
         Node newnode = new Node(item);
 
         if(sentinal.next == sentinal){
@@ -53,7 +53,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
             sentinal.prev = newnode;
             newnode.prev = sentinal;
             newnode.next = sentinal;
-        }else{
+        } else {
 
             Node newNode = new Node(item);
             newNode.prev = sentinal.prev;
@@ -64,9 +64,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
         size += 1;
     }
 
-    public T peek(){
-        return sentinal.next.value;
-    }
+
 
 
     public int size(){
@@ -95,10 +93,10 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
         System.out.println();
     }
 
-    public T removeFirst(){
-        if(sentinal.next == sentinal){
+    public T removeFirst() {
+        if (sentinal.next == sentinal) {
             return null;
-        }else{
+        } else {
             Node firstnode = sentinal.next;
             Node newfirstnode = firstnode.next;
             sentinal.next = newfirstnode;

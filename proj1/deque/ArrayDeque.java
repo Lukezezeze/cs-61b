@@ -3,26 +3,32 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
+public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
     private T[] items;
     private int size;
     private int nextfirst;
     private int nextlast;
 
-    public  ArrayDeque(){
+    public  ArrayDeque() {
         items = (T[]) new Object[8];
         size = 0;
-        nextfirst = items.length-1;
+        nextfirst = items.length - 1;
         nextlast = 0;
     }
 
-    public void addFirst(T item){
+    public void addFirst(T item) {
+        if (size()>=items.length) {
+            resize(items.length*2);
+        }
         items[nextfirst] = item;  // 插入元素到 nextFirst 的位置
         nextfirst = (nextfirst - 1 + items.length) % items.length;  // 更新 nextFirst
         size++;
     }
 
     public void addLast(T item) {
+        if (size()>=items.length) {
+            resize(items.length*2);
+        }
         items[nextlast] = item;  // 插入元素到 nextLast 的位置
         nextlast = (nextlast + 1) % items.length;  // 更新 nextLast
         size++;
@@ -30,7 +36,8 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
 
 
 
-    public int size(){
+
+    public int size() {
         return size;
     }
 
@@ -49,12 +56,12 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
         System.out.println();  // 打印完成后换行
     }
 
-    public T removeFirst(){
+    public T removeFirst() {
         if(size()==0){
             return  null;
         }
 
-        int firstindex = (nextfirst + 1)%items.length;
+        int firstindex = (nextfirst + 1) % items.length;
         T item = items[firstindex];
         items[firstindex] = null;
 
@@ -63,7 +70,7 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
         return item;
     }
 
-    public T removeLast(){
+    public T removeLast() {
         if(size() == 0){
             return null;
         }
@@ -74,10 +81,10 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
 
         nextlast = lastindex;
         size -= 1;
-        return  item;
+        return item;
     }
 
-    public T get(int index){
+    public T get(int index) {
         // 检查队列是否为空，或索引无效
         if (size() == 0 || index < 0 || index >= size()) {
             return null;
@@ -90,29 +97,32 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
         return items[targetIndex];
     }
 
-    public T peek(){
-        return items[(nextfirst + 1)%items.length];
-    }
 
-    public void resize(int capacity){
-        capacity = items.length * 2;
-        T[] newitems = (T[]) new Object[capacity];
 
-        int index = 0;
-        int firstindex = (nextfirst + 1)%items.length;
-        while (firstindex != nextlast){
-            newitems[index] = items[firstindex];
-            index += 1;
-            firstindex = (firstindex + 1)%items.length;
+    public void resize(int capacity) {
+        // 创建新的数组，容量为传入的 capacity
+        T[] newItems = (T[]) new Object[capacity];
+        for (int i = 0; i < size; i++) {
+            newItems[i] = items[(nextfirst + 1 + i) % items.length];
         }
-        items = newitems;
+        items = newItems;
+        nextfirst = capacity - 1; // 更新 nextFirst 以适应新数组
+        nextlast = size; // 更新 nextLast 以适应新数组
+
+        // 更新 items，容量变大
+        items = newItems;
+
+        // 更新 nextFirst 和 nextLast
+        nextfirst = capacity - 1;  // nextfirst 在新数组的末尾
+        nextlast = size;  // nextlast 指向下一个可用的位置
+
     }
 
-    private class ADiterator<T> implements Iterator<T>{
+    private class ADiterator<T> implements Iterator<T> {
         private int pos;
         private int count;
 
-        public ADiterator(){
+        public ADiterator() {
             pos = (nextfirst +1) % items.length;
             count = 0;
         }
@@ -125,7 +135,7 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
         @Override
         public T next() {
             T value = (T) items[pos];
-            pos = (pos+1)%items.length;
+            pos = (pos+1) % items.length;
             count += 1;
             return value;
 
@@ -134,7 +144,7 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
     }
 
     @Override
-    public Iterator<T> iterator(){
+    public Iterator<T> iterator() {
         return new ADiterator<T>();
     }
 
