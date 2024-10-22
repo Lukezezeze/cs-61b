@@ -57,18 +57,13 @@ public class GuitarString {
     }
 
     /* Return the double at the front of the buffer. */
-    public Double sample() {
+    public double sample() {
 
-        if (buffer.isEmpty()) {
-            return null;  // 或者返回默认值
-        }
         double a = buffer.get(0);
         return a;
+
     }
 
-    public double print(){
-        double a = buffer.get(0);
-        return a;
-    }
+
 }
 

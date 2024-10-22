@@ -3,19 +3,19 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
     public class Node {
         private T value;
         private Node next;
         private Node prev;
 
-        public Node(T value){
+        public Node(T value) {
             this.value = value;
         }
     }
 
-    Node sentinal;
-    int size;
+    private Node sentinal;
+    private int size;
 
     public LinkedListDeque() {
         sentinal = new Node(null);  // 初始化 sentinel 节点，null 表示没有实际数据
@@ -48,7 +48,7 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
     public void addLast(T item) {
         Node newnode = new Node(item);
 
-        if(sentinal.next == sentinal){
+        if (sentinal.next == sentinal) {
             sentinal.next = newnode;
             sentinal.prev = newnode;
             newnode.prev = sentinal;
@@ -67,8 +67,9 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
 
 
 
-    public int size(){
+    public int size() {
         return size;
+
     }
 
     public void printDeque() {
@@ -104,6 +105,7 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
             size -= 1;
             return firstnode.value;
         }
+
     }
 
     public T removeLast() {
@@ -121,9 +123,11 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
         if (sentinal.next == sentinal) {
             return null;
         } else {
-            Node current = sentinal.next;
-            int k = 0;
-            while (k != index) {
+            if (index < 0 || index >= size) {
+                return null;
+            }
+            Node current = sentinal.next; // 假设有一个哨兵节点
+            for (int i = 0; i < index; i++) {
                 current = current.next;
             }
             return current.value;
@@ -153,7 +157,7 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
         private Node current;
 
         // 构造函数，初始化从sentinel的下一个节点开始迭代
-        public LinkedListDequeIterator() {
+         LinkedListDequeIterator() {
             current = sentinal.next;
         }
 
@@ -173,7 +177,7 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
     }
 
     @Override
-    public Iterator<T> iterator(){
+    public Iterator<T> iterator() {
         return new LinkedListDequeIterator();
     }
 
@@ -199,14 +203,14 @@ public class LinkedListDeque<T> implements Iterable<T> , Deque<T>{
 
         // Compare elements in both deques
         Node thiscurrent = this.sentinal.next;
-        Node othercurrent = (Node) other.sentinal.next;
+        Node ocurrent = (Node) other.sentinal.next;
 
         while (thiscurrent != this.sentinal) {
-            if (!thiscurrent.value.equals(othercurrent.value)) {  // Use equals() for object comparison
+            if (!thiscurrent.value.equals(ocurrent.value)) {  // Use equals() for object comparison
                 return false;
             }
             thiscurrent = thiscurrent.next;
-            othercurrent = othercurrent.next;
+            ocurrent = ocurrent.next;
         }
 
         return true;

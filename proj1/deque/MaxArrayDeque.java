@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Comparator;
 
-public class MaxArrayDeque<T> extends ArrayDeque<T>{
+public class MaxArrayDeque<T> extends ArrayDeque<T> {
     private Comparator<T> comparator;
 
     // 构造函数，接受一个 Comparator 对象
@@ -26,7 +26,7 @@ public class MaxArrayDeque<T> extends ArrayDeque<T>{
         return maxElement;
     }
 
-    public T max(Comparator<T> c){
+    public T max(Comparator<T> c) {
         if (isEmpty()) {
             return null;  // 如果队列为空，返回 null
         }

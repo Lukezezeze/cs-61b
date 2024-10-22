@@ -3,7 +3,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
+public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
     private T[] items;
     private int size;
     private int nextfirst;
@@ -17,8 +17,8 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
     }
 
     public void addFirst(T item) {
-        if (size()>=items.length) {
-            resize(items.length*2);
+        if (size() >= items.length) {
+            resize(items.length * 2);
         }
         items[nextfirst] = item;  // 插入元素到 nextFirst 的位置
         nextfirst = (nextfirst - 1 + items.length) % items.length;  // 更新 nextFirst
@@ -26,8 +26,8 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
     }
 
     public void addLast(T item) {
-        if (size()>=items.length) {
-            resize(items.length*2);
+        if (size() >= items.length) {
+            resize(items.length * 2);
         }
         items[nextlast] = item;  // 插入元素到 nextLast 的位置
         nextlast = (nextlast + 1) % items.length;  // 更新 nextLast
@@ -57,7 +57,7 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
     }
 
     public T removeFirst() {
-        if(size()==0){
+        if (size() == 0) {
             return  null;
         }
 
@@ -67,11 +67,15 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
 
         nextfirst = firstindex;
         size -= 1;
+        if (size < items.length / 4 && items.length > 8) {
+            resize(items.length / 2);
+        }
         return item;
+
     }
 
     public T removeLast() {
-        if(size() == 0){
+        if (size() == 0) {
             return null;
         }
 
@@ -81,6 +85,9 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
 
         nextlast = lastindex;
         size -= 1;
+        if (size < items.length / 4 && items.length > 8) {
+            resize(items.length / 2);
+        }
         return item;
     }
 
@@ -99,7 +106,7 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
 
 
 
-    public void resize(int capacity) {
+    private void resize(int capacity) {
         // 创建新的数组，容量为传入的 capacity
         T[] newItems = (T[]) new Object[capacity];
         for (int i = 0; i < size; i++) {
@@ -122,8 +129,8 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
         private int pos;
         private int count;
 
-        public ADiterator() {
-            pos = (nextfirst +1) % items.length;
+         ADiterator() {
+            pos = (nextfirst + 1) % items.length;
             count = 0;
         }
 
@@ -135,7 +142,7 @@ public class ArrayDeque<T> implements Iterable<T> , Deque<T> {
         @Override
         public T next() {
             T value = (T) items[pos];
-            pos = (pos+1) % items.length;
+            pos = (pos + 1) % items.length;
             count += 1;
             return value;
 
