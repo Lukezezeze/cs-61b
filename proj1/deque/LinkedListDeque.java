@@ -157,7 +157,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
         private Node current;
 
         // 构造函数，初始化从sentinel的下一个节点开始迭代
-         LinkedListDequeIterator() {
+        LinkedListDequeIterator() {
             current = sentinal.next;
         }
 
