@@ -1,6 +1,9 @@
 package deque;
 
-public class ArrayDeque<T> {
+
+import java.util.Iterator;
+
+public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
     private T[] items;
     private int size;
     private int nextfirst;
@@ -31,9 +34,7 @@ public class ArrayDeque<T> {
         size += 1;
     }
 
-    public boolean isEmpty(){
-        return size() == 0;
-    }
+
 
     public int size(){
         return size;
@@ -83,17 +84,16 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index){
-        if(size() == 0){
-            return  null;
+        // 检查队列是否为空，或索引无效
+        if (size() == 0 || index < 0 || index >= size()) {
+            return null;
         }
 
-        int firstindex = (nextfirst + 1) % items.length;
-        while (index != 0){
-            firstindex = (firstindex + 1) % items.length;
-            index -= 1;
-        }
+        // 计算目标元素的实际索引位置
+        int targetIndex = (nextfirst + 1 + index) % items.length;
 
-        return items[firstindex];
+        // 返回目标位置的元素
+        return items[targetIndex];
     }
 
     public void resize(int capacity){
@@ -110,4 +110,56 @@ public class ArrayDeque<T> {
         items = newitems;
     }
 
+    private class ADiterator<T> implements Iterator<T>{
+        private int pos;
+        private int count;
+
+        public ADiterator(){
+            pos = (nextfirst +1) % items.length;
+            count = 0;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return count < size;
+        }
+
+        @Override
+        public T next() {
+            T value = (T) items[pos];
+            pos = (pos+1)%items.length;
+            count += 1;
+            return value;
+
+        }
+
+    }
+
+    @Override
+    public Iterator<T> iterator(){
+        return new ADiterator<T>();
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if(this != o){
+            return false;
+        }
+
+        if(o == null || !(o instanceof ArrayDeque<?>)){
+            return false;
+        }
+
+        if (o instanceof ArrayDeque<?> other) {
+            int pos = (this.nextfirst+1)%items.length;
+            while (pos != nextlast){
+                if(this.items[pos] != other.items[pos]){
+                    return false;
+                }
+                pos = (pos+1)%items.length;
+            }
+        }
+
+        return true;
+    }
 }

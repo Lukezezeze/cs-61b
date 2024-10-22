@@ -1,6 +1,9 @@
 package deque;
 
-public class LinkedListDeque<T> {
+
+import java.util.Iterator;
+
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
     public class Node{
         T value;
         Node next;
@@ -61,9 +64,7 @@ public class LinkedListDeque<T> {
         size += 1;
     }
 
-    public boolean isEmpty(){
-        return sentinal.next == sentinal;
-    }
+
 
     public int size(){
         return size;
@@ -147,5 +148,60 @@ public class LinkedListDeque<T> {
         return getRecursiveHelper(current.next, index - 1);
     }
 
+    private class LinkedListDequeIterator implements Iterator<T> {
+        private Node current;
+
+        // 构造函数，初始化从sentinel的下一个节点开始迭代
+        public LinkedListDequeIterator() {
+            current = sentinal.next;
+        }
+
+        // hasNext() 方法，判断是否还有下一个元素
+        @Override
+        public boolean hasNext() {
+            return current != sentinal; // 当current不是sentinel时，还有下一个元素
+        }
+
+        // next() 方法，返回当前节点的值，并将游标移动到下一个节点
+        @Override
+        public T next() {
+            T value = current.value; // 获取当前节点的值
+            current = current.next;  // 将current指向下一个节点
+            return value;            // 返回当前节点的值
+        }
+    }
+
+    @Override
+    public Iterator<T> iterator(){
+        return new LinkedListDequeIterator();
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if(this != o){
+            return false;
+        }
+
+        if(!(o instanceof LinkedListDeque<?>) || o == null){
+            return false;
+        }
+
+        if(o instanceof LinkedListDeque<?> other){
+            if(this.size() != other.size()){
+                return false;
+            }
+
+            Node thiscurrent = this.sentinal.next;
+            Node othercurrent = (Node) other.sentinal.next;
+            while (thiscurrent != this.sentinal){
+                if(thiscurrent.value != othercurrent.value){
+                    return false;
+                }
+                thiscurrent = thiscurrent.next;
+                othercurrent = othercurrent.next;
+            }
+        }
+        return true;
+    }
 
 }
