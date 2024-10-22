@@ -64,6 +64,9 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T>{
         size += 1;
     }
 
+    public T peek(){
+        return sentinal.next.value;
+    }
 
 
     public int size(){

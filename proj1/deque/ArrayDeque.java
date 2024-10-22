@@ -90,6 +90,10 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
         return items[targetIndex];
     }
 
+    public T peek(){
+        return items[(nextfirst + 1)%items.length];
+    }
+
     public void resize(int capacity){
         capacity = items.length * 2;
         T[] newitems = (T[]) new Object[capacity];
