@@ -141,25 +141,35 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T> {
     }
 
     @Override
-    public boolean equals(Object o){
-        if(this != o){
+    public boolean equals(Object o) {
+        // If it's the same object, return true
+        if (this == o) {
+            return true;
+        }
+
+        // If the object is not an ArrayDeque or is null, return false
+        if (!(o instanceof ArrayDeque<?>)) {
             return false;
         }
 
-        if(o == null || !(o instanceof ArrayDeque<?>)){
+        // Cast the object to ArrayDeque
+        ArrayDeque<?> other = (ArrayDeque<?>) o;
+
+        // Check if sizes are different
+        if (this.size() != other.size()) {
             return false;
         }
 
-        if (o instanceof ArrayDeque<?> other) {
-            int pos = (this.nextfirst+1)%items.length;
-            while (pos != nextlast){
-                if(this.items[pos] != other.items[pos]){
-                    return false;
-                }
-                pos = (pos+1)%items.length;
+        // Compare elements in both deques
+        for (int i = 0; i < this.size(); i++) {
+            T thisItem = this.get(i);
+            Object otherItem = other.get(i);
+            if (!thisItem.equals(otherItem)) {  // Use equals() for object comparison
+                return false;
             }
         }
 
         return true;
     }
+
 }
