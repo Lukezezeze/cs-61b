@@ -77,7 +77,7 @@ public class GuitarString {
         if (buffer.isEmpty()) {
             return null;  // 或者返回默认值
         }
-        double a = buffer.peek();
+        double a = buffer.get(0);
         return a;
     }
 
