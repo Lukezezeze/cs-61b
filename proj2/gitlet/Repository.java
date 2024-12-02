@@ -180,8 +180,9 @@ public class Repository implements Serializable {
         String timecommit = dateToTimeStamp(currenttime); //get the time commit
         Commit precommit = getcurrentcommit();           // get the precommit
         String precommitid = precommit.getcommitid();    // get the precommit object to store information
-        List<String> parent = precommit.getParent();     //get the parent id
+        List<String> parent = new ArrayList<>();     //get the parent id
         parent.add(precommitid);                         //store the parentid to a list;
+        //System.out.print(precommitid);
         Map<String,String> blobidlist = precommit.getblobidlist(); //get the precommit's bloblist
 
         // check the stage area to commit
@@ -205,6 +206,11 @@ public class Repository implements Serializable {
         // create new commit and save it in new commit_dir
         String newcommitid = generateID(currenttime,message,parent,blobidlist);
         Commit newcommit = new Commit(newcommitid,parent,message,blobidlist,timecommit);
+
+        if (newcommit.getParent().isEmpty()) {
+            System.out.print("no");
+        }
+
         if (!join(COMMITS_DIR,newcommitid).exists()) {
             writeObject(join(COMMITS_DIR,newcommitid),newcommit);
         }
@@ -253,6 +259,7 @@ public class Repository implements Serializable {
             System.out.println("No commits found.");
             return; // 如果提交列表为空，直接返回
         }
+
         for (String commitID : commitlist) {
             Commit commit = readObject(join(COMMITS_DIR,commitID), Commit.class);
             System.out.println("===");
@@ -277,16 +284,11 @@ public class Repository implements Serializable {
 
         commitList.add(cur.getcommitid());
 
-        // 遍历父提交链
-        while (cur.getParent() != null && !cur.getParent().isEmpty()) {
-            String commitId = cur.getParent().get(0);
+        // 如果当前提交有父提交，则递归获取父提交
+        while (cur != null && cur.getParent() != null && !cur.getParent().isEmpty()) {
+            String commitId = cur.getParent().get(0);  // 获取父提交 ID
             commitList.add(commitId);
-
-            // 读取父提交
             cur = readObject(join(COMMITS_DIR, commitId), Commit.class);
-            if (cur == null) {
-                break; // 如果没有读取到父提交，跳出循环
-            }
         }
 
         return commitList;
@@ -379,12 +381,12 @@ public class Repository implements Serializable {
     public static void checkoutcommitidfilename(String commitid, String filename) {
         Commit commit = readObject(join(COMMITS_DIR,commitid), Commit.class);
         Map<String,String> Bloblist = commit.getblobidlist();
-
+        //System.out.println(Bloblist);
         //faliure case: if this file dont exist
         if (!join(COMMITS_DIR,commitid).exists()) {
             System.out.println("No commit with that id exists.");
         }
-        if (Bloblist.containsKey(filename)){
+        if (!Bloblist.containsKey(filename)){
             System.out.println("File does not exist in that commit.");
         }
 
@@ -479,6 +481,8 @@ public class Repository implements Serializable {
             writeContents(join(CWD,filename),newcontents);
         }
     }
+
+
 
 
 

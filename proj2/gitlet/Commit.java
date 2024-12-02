@@ -46,7 +46,7 @@ public class Commit implements Serializable {
         this.id = id;
         this.blobid = blobid;
         this.message = message;
-        this.parent = new ArrayList<>();
+        this.parent = parent != null ? parent : new ArrayList<>();
         this.timestamp = timestamp;
     }
 
@@ -74,5 +74,7 @@ public class Commit implements Serializable {
     public String getTimestamp() {
         return timestamp;
     }
+
+
 
 }
