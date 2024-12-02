@@ -60,9 +60,16 @@ public class Stage implements Serializable {
 
     /** Load the Stage object from a file. */
     public static Stage loadStage(File stageFile) {
-        if (!stageFile.exists()) {
-            return new Stage();
+        // 如果文件不存在或文件为空，返回一个新的 Stage 对象
+        if (!stageFile.exists() || stageFile.length() == 0) {
+            return new Stage();  // 创建并返回一个新的 Stage 对象
         }
-        return Utils.readObject(stageFile, Stage.class);
+        try {
+            return Utils.readObject(stageFile, Stage.class);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Failed to load the stage from file: " + stageFile.getAbsolutePath());
+            e.printStackTrace();  // 打印堆栈信息
+            return null;  // 或者返回默认的 Stage 对象
+        }
     }
 }

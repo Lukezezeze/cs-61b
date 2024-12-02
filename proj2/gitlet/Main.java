@@ -64,18 +64,22 @@ public class Main {
                 Repository.status();
                 break;
             case"checkout":
-                if (args.length == 3) {
+                if (args.length == 3 && args[1].equals("--")) {
                     validateifgitdir();
                     Repository.checkoutfilename(args[2]);
+                    break;
                 } else if (args.length == 4) {
                     validateifgitdir();
                     Repository.checkoutcommitidfilename(args[1],args[3]);
+                    break;
                 } else if (args.length == 2) {
                     validateifgitdir();
                     Repository.checkoutbranchname(args[1]);
+                    break;
                 } else {
                     System.out.println("Incorrect operands.");
                     System.exit(4);
+                    break;
                 }
             default:
                 System.out.println("No command with that name exists.");
@@ -92,7 +96,7 @@ public class Main {
     }
 
     public static void validateifgitdir() {
-        if (!Repository.GITLET_DIR.exists() || Repository.GITLET_DIR.isDirectory()) {
+        if (!Repository.GITLET_DIR.exists() || !Repository.GITLET_DIR.isDirectory()) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0); // Optionally terminate the program if not in a Gitlet directory
         }

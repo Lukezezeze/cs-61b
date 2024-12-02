@@ -46,7 +46,7 @@ public class Commit implements Serializable {
         this.id = id;
         this.blobid = blobid;
         this.message = message;
-        this.parent = parent;
+        this.parent = new ArrayList<>();
         this.timestamp = timestamp;
     }
 

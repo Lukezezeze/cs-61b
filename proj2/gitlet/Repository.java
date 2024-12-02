@@ -95,6 +95,7 @@ public class Repository implements Serializable {
 
 
     public static void init() {
+
         //create a initcommit Object
         Date currentTime = new Date(0);
         String message = "initial commit";
@@ -149,6 +150,9 @@ public class Repository implements Serializable {
             stage.removeFile(filename);
         } else {
             // 文件修改，或新增，将其添加到暂存区
+            if (stage == null) {
+                stage = new Stage();  // 如果 stage 为 null，初始化一个新的 Stage
+            }
             stage.addFile(filename, newBlobID);
 
             // 保存 blob 到 blobs 目录
@@ -244,33 +248,48 @@ public class Repository implements Serializable {
     }
 
     public static void log() {
-        Commit currentcommit = getcurrentcommit(); //get current commit
-
-        while (true) {
-            String id = currentcommit.getcommitid();
-            String time = currentcommit.getTimestamp();
-            String message = currentcommit.getMessage(); //get the currentcommit's message
-            List<String> parent = currentcommit.getParent(); //get currentcommit's parent
+        List<String> commitlist = getCommitList();
+        if (commitlist.isEmpty()) {
+            System.out.println("No commits found.");
+            return; // 如果提交列表为空，直接返回
+        }
+        for (String commitID : commitlist) {
+            Commit commit = readObject(join(COMMITS_DIR,commitID), Commit.class);
             System.out.println("===");
-            System.out.println("commit "+id);
-            if (parent.size() != 1) {
-                System.out.print("Merge: ");
-                for (String elments : parent) {
-                     System.out.print(elments+" ");
+            System.out.println("commit "+commit.getcommitid());
+            if (commit.getParent().size() > 1) {
+                System.out.print("Merge:");
+                for (String id : commit.getParent()) {
+                    System.out.print(" "+id);
                 }
             }
-            System.out.println("Date: "+time);
-            System.out.println(message);
-            System.out.println(); // 输出空行
-
-            // 如果没有父提交，跳出循环
-            if (currentcommit.getParent().isEmpty()) {
-                break;
+            System.out.println("Date: "+commit.getTimestamp());
+            System.out.println(commit.getMessage());
+            if (!commit.getParent().isEmpty()) {
+                System.out.println(); // 输出空行
             }
-
-            //update commit object
-            currentcommit = readObject(join(COMMITS_DIR, parent.get(0)), Commit.class);
         }
+    }
+
+    private static List<String> getCommitList() {
+        List<String> commitList = new ArrayList<>();
+        Commit cur = getcurrentcommit();
+
+        commitList.add(cur.getcommitid());
+
+        // 遍历父提交链
+        while (cur.getParent() != null && !cur.getParent().isEmpty()) {
+            String commitId = cur.getParent().get(0);
+            commitList.add(commitId);
+
+            // 读取父提交
+            cur = readObject(join(COMMITS_DIR, commitId), Commit.class);
+            if (cur == null) {
+                break; // 如果没有读取到父提交，跳出循环
+            }
+        }
+
+        return commitList;
     }
 
     public static void global_log() {
@@ -346,7 +365,7 @@ public class Repository implements Serializable {
         Map<String,String> Bloblist = currentcommit.getblobidlist();
 
         //faliure case: if this file dont exist
-        if (Bloblist.containsKey(filename)){
+        if (!Bloblist.containsKey(filename)){
             System.out.println("File does not exist in that commit.");
         }
 
