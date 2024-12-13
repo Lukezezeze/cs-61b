@@ -81,6 +81,25 @@ public class Main {
                     System.exit(4);
                     break;
                 }
+            case"branch":
+                validateifgitdir();
+                validatenums(firstArg,args,2);
+                Repository.branch(args[1]);
+                break;
+            case"rm-branch":
+                validateifgitdir();
+                validatenums(firstArg,args,2);
+                Repository.rm_branch(args[1]);
+                break;
+            case"reset":
+                validateifgitdir();
+                validatenums(firstArg,args,2);
+                Repository.reset(args[1]);
+                break;
+            case"merge":
+                validateifgitdir();
+                validatenums(firstArg,args,2);
+                Repository.merge(args[1]);
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(2);

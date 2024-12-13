@@ -207,19 +207,17 @@ public class Repository implements Serializable {
         String newcommitid = generateID(currenttime,message,parent,blobidlist);
         Commit newcommit = new Commit(newcommitid,parent,message,blobidlist,timecommit);
 
-        if (newcommit.getParent().isEmpty()) {
-            System.out.print("no");
-        }
 
         if (!join(COMMITS_DIR,newcommitid).exists()) {
             writeObject(join(COMMITS_DIR,newcommitid),newcommit);
         }
 
+        String branch = getCurrentBranch();
         // Update the current branch (e.g., master) to point to the new commit
-        writeContents(MASTER_file, newcommitid);
+        writeContents(join(Refs,branch), newcommitid);
 
         // Update the HEAD pointer to point to the current branch
-        writeContents(HEAD_DIR, "master");
+        writeContents(HEAD_DIR, branch);
 
     }
 
@@ -422,8 +420,8 @@ public class Repository implements Serializable {
         for(String filename : filelista) {
             if (bloblistb.containsKey(filename)) {    //if the file was tracked by two commits
                 if (bloblista.get(filename) != bloblistb.get(filename)) {
-                    String commitbid = bloblistb.get(filename);
-                    String newcontents = readContentsAsString(join(COMMITS_DIR,commitbid));
+                    String blobsbid = bloblistb.get(filename);
+                    String newcontents = readContentsAsString(join(BLOBS_DIR,blobsbid));
                     putfileincwd(filename,newcontents);
                 }
             } else {   //only tracked by a
@@ -448,6 +446,154 @@ public class Repository implements Serializable {
         stage.clear();
 
     }
+
+    public static void branch(String branchname) {
+        try {
+            if (!join(Refs,branchname).exists()) {
+                join(Refs,branchname).createNewFile();
+            }
+        } catch (IOException e) {
+            // 处理异常
+            e.printStackTrace();
+        }
+        writeContents(join(Refs,branchname),getcurrentcommit().getcommitid());
+    }
+
+    public static void rm_branch(String branchname) {
+        //failure case
+        File branchfile = join(Refs,branchname);
+        if (!branchfile.exists()) {
+            System.out.println("A branch with that name does not exist.");
+        }
+        if (readContentsAsString(HEAD_DIR) == branchname) {
+            System.out.println("Cannot remove the current branch.");
+        }
+        branchfile.delete();
+    }
+
+    public static void reset(String commitid){
+        //failure case:
+        if (!join(COMMITS_DIR,commitid).exists()) {
+            System.out.println("No commit with that id exists.");
+        }
+
+        //get two branchs's commit object and swithch branch
+        Commit commita = getcurrentcommit();
+
+        Commit commitb = readObject(join(COMMITS_DIR,commitid), Commit.class);
+
+        //get two commits' bloblits
+        Map<String, String> bloblista = commita.getblobidlist();
+        Map<String, String> bloblistb = commitb.getblobidlist();
+        Set<String> filelista = bloblista.keySet();
+        Set<String> filelistb = bloblistb.keySet();
+        //compare two bloblist
+
+        for(String filename : filelista) {
+            if (bloblistb.containsKey(filename)) {    //if the file was tracked by two commits
+                if (bloblista.get(filename) != bloblistb.get(filename)) {
+                    String commitbid = bloblistb.get(filename);
+                    String newcontents = readContentsAsString(join(COMMITS_DIR,commitbid));
+                    putfileincwd(filename,newcontents);
+                }
+            } else {   //only tracked by a
+                join(CWD,filename).delete();
+            }
+        }
+
+        for (String filename : filelistb) {        // only tracked by commitb
+            if (!bloblista.containsKey(filename)) {
+                if (!join(CWD,filename).exists()) {
+                    String commitbid = bloblistb.get(filename);
+                    String newcontents = readContentsAsString(join(COMMITS_DIR,commitbid));
+                    putfileincwd(filename,newcontents);
+                } else {
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first");
+                }
+            }
+        }
+
+        //clear the stage_area
+        Stage stage = Stage.loadStage(STAGE_DIR);
+        stage.clear();
+    }
+
+    public static void merge(String branch) {
+        mergeFaliureCases(branch);
+        String currentbranch = getCurrentBranch();
+        String branchid = readContentsAsString(join(Refs,branch));
+        String splitpoint = findSplitPoint(currentbranch,branch);
+
+        if (splitpoint == branchid) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+        }
+        if (splitpoint == getcurrentcommit().getcommitid()) {
+            System.out.println("Current branch fast-forwarded.");
+        }
+        Map<String, String> splitmap = readObject(join(COMMITS_DIR,splitpoint), Commit.class).getblobidlist();
+        Map<String, String> currentmap = getcurrentcommit().getblobidlist();
+        Map<String, String> branchmap = readObject(join(COMMITS_DIR,branchid), Commit.class).getblobidlist();
+
+        Stage stage = Stage.loadStage(STAGE_DIR);
+        Map<String, String> addFiles = stage.getAddedFiles();
+
+        for (String filename : splitmap.keySet()) {
+
+            if (!currentmap.containsKey(filename) && !branchmap.containsKey(filename)) {
+                join(CWD,filename).delete();
+            }
+
+            String splitContent = splitmap.get(filename);
+            String currentContent = currentmap.get(filename);
+            if (splitContent.equals(currentContent) && !branchmap.containsKey(filename)) {
+                currentmap.remove(filename);
+                join(CWD,filename).delete();
+            }
+
+            String branchContent = branchmap.get(filename);
+
+            if (splitContent.equals(branchContent) && !currentmap.containsKey(filename)) {
+                branchmap.remove(filename);
+                join(CWD,filename).delete();
+            }
+
+            if (splitContent.equals(currentContent) && !splitContent.equals(branchContent)) {
+                String newcontent = readContentsAsString(join(BLOBS_DIR,branchContent));
+                putfileincwd(filename, newcontent);
+                addFiles.put(filename,branchContent);
+            }
+        }
+
+        for (String key : branchmap.keySet()) {
+            if (!splitmap.containsKey(key)) {
+                addFiles.put(key,branchmap.get(key));
+                String newcotent = readContentsAsString(join(BLOBS_DIR,branchmap.get(key)));
+                putfileincwd(key, newcotent);
+                add(key);
+            }
+
+
+            if (branchmap.get(key) != currentmap.get(key) && !splitmap.containsKey(key)) {
+                System.out.println("Encountered a merge conflict.");
+                processConflict(key,currentbranch,branch);
+                add(key);
+            }
+
+            processConflict(key,currentbranch,branch);
+        }
+
+        for (String key : currentmap.keySet()) {
+            System.out.println("Encountered a merge conflict.");
+            processConflict(key,currentbranch,branch);
+            add(key);
+        }
+
+        stage.saveStage(STAGE_DIR);
+        String message = "Merged" +branch+ "into" + currentbranch +".";
+        commit1(message, currentbranch);
+
+    }
+
 
     private static Commit getcurrentcommit() {
         String branch = readContentsAsString(HEAD_DIR);//get the current branch
@@ -482,9 +628,213 @@ public class Repository implements Serializable {
         }
     }
 
+    private static void processConflict(String key, String brancha, String branchb) {
+        String ida = readContentsAsString(join(Refs,brancha));
+        String idb = readContentsAsString(join(Refs,branchb));
+        Commit a = readObject(join(COMMITS_DIR,ida), Commit.class);
+        Commit b = readObject(join(COMMITS_DIR,idb), Commit.class);
+        Map <String, String> bloba = a.getblobidlist();
+        Map<String, String> blobb = b.getblobidlist();
+        String id = findSplitPoint(brancha,branchb);
+        Map<String, String> splitmap = readObject(join(COMMITS_DIR,id), Commit.class).getblobidlist();
 
 
+        if (bloba.containsKey(key) && !blobb.containsKey(key)) {
+            String confilictcontentsa = readContentsAsString(join(BLOBS_DIR,bloba.get(key)));
+            String conflictMarker = "<<<<<<< HEAD\n" +
+                    confilictcontentsa +
+                    "\n=======\n" +
+                    null +
+                    "\n>>>>>>>";
+            putfileincwd(key,conflictMarker);
+        } else if (!bloba.containsKey(key) && blobb.containsKey(key)) {
+            String confilictcontentsb = readContentsAsString(join(BLOBS_DIR,bloba.get(key)));
+            String conflictMarker = "<<<<<<< HEAD\n" +
+                    null +
+                    "\n=======\n" +
+                    confilictcontentsb+
+                    "\n>>>>>>>";
+            putfileincwd(key,conflictMarker);
+        } else {
+            if (bloba.get(key) != blobb.get(key));
+            String confilictcontentsa = readContentsAsString(join(BLOBS_DIR,bloba.get(key)));
+            String confilictcontentsb = readContentsAsString(join(BLOBS_DIR,blobb.get(key)));
+            String conflictMarker = "<<<<<<< HEAD\n" +
+                    confilictcontentsa +
+                    "\n=======\n" +
+                    confilictcontentsb +
+                    "\n>>>>>>>";
+            putfileincwd(key,conflictMarker);
+        }
+
+        if (bloba.containsKey(key) && blobb.containsKey(key) && !splitmap.containsKey(key)) {
+            System.out.println("Encountered a merge conflict.");
+            String confilictcontentsa = readContentsAsString(join(BLOBS_DIR,bloba.get(key)));
+            String confilictcontentsb = readContentsAsString(join(BLOBS_DIR,blobb.get(key)));
+            String conflictMarker = "<<<<<<< HEAD\n" +
+                    confilictcontentsa +
+                    "\n=======\n" +
+                    confilictcontentsb +
+                    "\n>>>>>>>";
+            putfileincwd(key,conflictMarker);
+        }
+
+    }
 
 
+    private static Map<String, Integer> bfsForBranch (String branch) {
+        Map<String, Integer> mapa = new HashMap<>();     //record current commit and  depth
+        Queue<String> queuea = new LinkedList<>();
+
+        String commitID = readContentsAsString(join(heads, branch));
+        Commit current_commit = readObject(join(COMMITS_DIR,commitID), Commit.class);
+
+        queuea.add(current_commit.getcommitid());
+        mapa.put(current_commit.getcommitid(), 0);
+
+        while (!queuea.isEmpty()) {
+            String curm = queuea.poll();
+            int curdepth = mapa.get(curm);
+
+            // 获取当前提交的父提交列表（可以通过某种方式获取父提交ID）
+            List<String> parents = current_commit.getParent();
+
+            for (String parent : parents) {
+                if (!mapa.containsKey(parent)) {
+                    mapa.put(parent, curdepth + 1);
+                    queuea.add(parent);
+                }
+            }
+        }
+        return mapa;
+    }
+
+    private static String findSplitPoint(String brancha, String branchb) {
+        String splitPoint = null;
+        int minDepth = Integer.MAX_VALUE;
+
+        Map<String, Integer> Mapa = bfsForBranch(brancha);
+        Map<String, Integer> Mapb = bfsForBranch(branchb);
+
+        for (Map.Entry<String, Integer> entryA : Mapa.entrySet()) {
+            String commitIdA = entryA.getKey();
+            if (Mapb.containsKey(commitIdA)) {
+                int deptha = Mapa.get(commitIdA);
+
+                // 选择深度最小的提交作为split point
+                if (deptha < minDepth) {
+                    minDepth = deptha;
+                    splitPoint = commitIdA;
+                }
+            }
+        }
+
+        return splitPoint;
+    }
+
+    private static String getCurrentBranch() {
+        return readContentsAsString(HEAD_DIR);
+    }
+
+    private static void mergeFaliureCases(String branch) {
+        Stage stage = Stage.loadStage(STAGE_DIR);
+        Map<String, String> addfiles = stage.getAddedFiles();
+
+        Commit commit1 = getcurrentcommit();
+        String curbranch = readContentsAsString(HEAD_DIR);
+        changebranch(branch);
+        Commit commit2 = getcurrentcommit();
+        changebranch(curbranch);
+        if (untrackFileExists(commit1) || untrackFileExists(commit2)) {
+            
+        }
+        if (addfiles.isEmpty()) {
+           System.out.println("You have uncommitted changes.");
+        }
+
+        if (branch == readContentsAsString(HEAD_DIR)) {
+            System.out.println("Cannot merge a branch with itself.");
+        }
+
+        if (!join(Refs,branch).exists()) {
+            System.out.println("A branch with that name does not exist.");
+        }
+    }
+
+
+    private static void commit1(String message, String branch) {
+
+        if (message == null || message.trim().isEmpty()) {
+            System.out.println("Please enter a commit message.");
+            return; // Exit the method early if the message is invalid
+        }
+
+        //create a new commit object
+        String curbranch = getCurrentBranch();
+
+        Date currenttime = new Date();
+        String timecommit = dateToTimeStamp(currenttime); //get the time commit
+
+        Commit precommit1 = getcurrentcommit();// get the precommit
+        changebranch(branch);
+        Commit precommit2 = getcurrentcommit();
+        changebranch(curbranch);
+        String precommitid1 = precommit1.getcommitid();// get the precommit object to store information
+        String precommitid2 = precommit1.getcommitid();
+        List<String> parent = new ArrayList<>();     //get the parent id
+        parent.add(precommitid1);
+        parent.add(precommitid2);//store the parentid to a list;
+        //System.out.print(precommitid);
+        Map<String,String> blobidlist1 = precommit1.getblobidlist(); //get the precommit's bloblist
+        Map<String,String> blobidlist2 = precommit1.getblobidlist(); //get the precommit's bloblist
+        blobidlist1.putAll(blobidlist2);
+
+        // check the stage area to commit
+        Stage stage = Stage.loadStage(STAGE_DIR);
+
+        // compare stage area's blobs and commit's to add or remove
+        Map<String,String> stageadd = stage.getAddedFiles();
+        //failure cases check
+        if (stageadd == null) {
+            System.out.println("No changes added to the commit.");
+        }
+        blobidlist1.putAll(stageadd);     //upadate commit for stage_for_add
+
+        for (String key : stage.getRemovedFiles()) {
+            blobidlist1.remove(key);      // update commit for stage_for_remove
+        }
+
+        stage.clear();//clear the stage area
+        stage.saveStage(HEAD_DIR);  //update the contents in stage file
+
+        // create new commit and save it in new commit_dir
+        String newcommitid = generateID(currenttime,message,parent,blobidlist1);
+        Commit newcommit = new Commit(newcommitid,parent,message,blobidlist1,timecommit);
+
+
+        if (!join(COMMITS_DIR,newcommitid).exists()) {
+            writeObject(join(COMMITS_DIR,newcommitid),newcommit);
+        }
+
+        // Update the current branch (e.g., master) to point to the new commit
+        writeContents(join(Refs,curbranch), newcommitid);
+
+        // Update the HEAD pointer to point to the current branch
+        writeContents(HEAD_DIR, curbranch);
+
+    }
+
+    public static boolean untrackFileExists(Commit commit) {
+        List<String> workFileNames = plainFilenamesIn(CWD);
+        Set<String> currTrackSet = commit.getblobidlist().keySet();
+        /* 先检测CWD中是否存在未被current branch跟踪的文件 */
+
+        for (String workFile : workFileNames) {
+            if (!currTrackSet.contains(workFile)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
